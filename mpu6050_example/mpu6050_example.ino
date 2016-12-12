@@ -3,6 +3,9 @@
 // August 17, 2014
 // Public Domain
 // http://playground.arduino.cc/Main/MPU-6050?action=sourceblock&num=1
+
+// Hello!
+
 #include<Wire.h>
 const int MPU_addr=0x68;  // I2C address of the MPU-6050
 int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ;

@@ -8,7 +8,7 @@ const int m = 134;  // one metre
 void setup() {
   Serial.begin(57600);  // Connection to the motore-controller board
   delay(1000);           // Wait for the car to be put down on the floor
-  Serial.print("#Sb000,100");   // 25% speed on each motor
+  Serial.print("#Sb050,050");   // 25% speed on each motor
   Serial.print("#d1f");         // both motors forward
   Serial.print("#d2f");
   lcd.begin(16, 2);

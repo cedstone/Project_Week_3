@@ -16,13 +16,13 @@ void setup(){
 }
 void loop(){
   readIMU();
-  calculateAcg();
-  Serial.print("AcX = "); Serial.print(AcgX);
-  Serial.print(" | AcY = "); Serial.print(AcgY);
-  Serial.print(" | AcZ = "); Serial.print(AcgZ);
-  Serial.print(" | GyX = "); Serial.print(GyX);
-  Serial.print(" | GyY = "); Serial.print(GyY);
-  Serial.print(" | GyZ = "); Serial.println(GyZ);
+  //Serial.print("AcX = "); Serial.print(AcgX);
+  //Serial.print(" | AcY = "); Serial.print(AcgY);
+  //Serial.print(" | AcZ = "); Serial.print(AcgZ);
+  //Serial.print(" | GyX = "); Serial.print(GyX);
+  //Serial.print(" | GyY = "); Serial.print(GyY);
+  //Serial.print(" | GyZ = "); Serial.println(GyZ);
+  Serial.println(getSlopeDirection());
   delay(200);
 }
 
@@ -47,9 +47,28 @@ void readIMU(){
   GyZ=Wire.read()<<8|Wire.read();  // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
 }
 
-void calculateAcg(){
+
+float getSlopeDirection(){
+  float rads = 0;
+  float degs = 0;
   AcgX = (float)AcX/16384;
   AcgY = (float)AcY/16384;
+  rads = (float)atan(AcgY/AcgX);
+  degs = toDegs(rads);
+  return degs;
+}
+
+float getGradient(){
+  float rads = 0;
+  float degs = 0;
   AcgZ = (float)AcZ/16384;
+  rads = (float)acos(AcgZ);
+  degs = toDegs(rads);
+  return degs;
+}
+
+float toDegs(float rads){
+  degs = 360.0*(rads/6.28);
+  return degs;
 }
 

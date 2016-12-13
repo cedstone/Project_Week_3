@@ -16,13 +16,16 @@ void setup(){
 }
 void loop(){
   readIMU();
+  AcgX = (float)AcX/16384;
+  AcgY = (float)AcY/16384;
+  AcgZ = (float)AcZ/16384;
   //Serial.print("AcX = "); Serial.print(AcgX);
-  //Serial.print(" | AcY = "); Serial.print(AcgY);
-  //Serial.print(" | AcZ = "); Serial.print(AcgZ);
+  Serial.print(" | AcY = "); Serial.print(AcgY);
+  Serial.print(" | AcZ = "); Serial.print(AcgZ);
   //Serial.print(" | GyX = "); Serial.print(GyX);
   //Serial.print(" | GyY = "); Serial.print(GyY);
   //Serial.print(" | GyZ = "); Serial.println(GyZ);
-  Serial.print(getSlopeDirection());
+  //Serial.print(getSlopeDirection());
   Serial.print("\t");
   Serial.println(runningAverage(getGradient()));
   delay(100);
@@ -80,14 +83,15 @@ float getGradient(){
   float degs = 0;
   AcgZ = (float)AcZ/16384;
   if (AcgZ > 1) { AcgZ = 1; }
+  if (AcgZ < -1) { AcgZ = -1; }
   rads = (float)acos(AcgZ);
   degs = toDegs(rads);
-  degs = degs - 10; // Hack to avoid as-yet unexplained error
+  //degs = degs - 10; // Hack to avoid as-yet unexplained error
   return degs;
 }
 
 float toDegs(float rads){
-  float degs = 360*(rads/6.28);
+  float degs = 360*(rads/6.2832);
   return degs;
 }
 

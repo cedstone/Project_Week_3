@@ -20,14 +20,15 @@ void loop(){
   AcgY = (float)AcY/16384;
   AcgZ = (float)AcZ/16384;
   //Serial.print("AcX = "); Serial.print(AcgX);
-  Serial.print(" | AcY = "); Serial.print(AcgY);
-  Serial.print(" | AcZ = "); Serial.print(AcgZ);
+  //Serial.print(" | AcY = "); Serial.print(AcgY);
+  //Serial.print(" | AcZ = "); Serial.print(AcgZ);
   //Serial.print(" | GyX = "); Serial.print(GyX);
   //Serial.print(" | GyY = "); Serial.print(GyY);
   //Serial.print(" | GyZ = "); Serial.println(GyZ);
-  //Serial.print(getSlopeDirection());
+  Serial.print(getSlopeDirection());
   Serial.print("\t");
   Serial.println(runningAverage(getGradient()));
+  //Serial.println(getGradient());
   delay(100);
 }
 
@@ -82,11 +83,13 @@ float getGradient(){
   float rads = 0;
   float degs = 0;
   AcgZ = (float)AcZ/16384;
-  if (AcgZ > 1) { AcgZ = 1; }
-  if (AcgZ < -1) { AcgZ = -1; }
+  if (AcgZ >= 1) { AcgZ = 0.99; }
+  if (AcgZ <= -1) { AcgZ = -0.99; }
   rads = (float)acos(AcgZ);
   degs = toDegs(rads);
   //degs = degs - 10; // Hack to avoid as-yet unexplained error
+  degs =  degs - (500*(float)pow(degs, -1.6));
+  if (degs < 0 ) { degs = 0; }
   return degs;
 }
 
@@ -98,7 +101,7 @@ float toDegs(float rads){
 
 float runningAverage(float M) {
   // From http://playground.arduino.cc/Main/RunningAverage
-  #define LM_SIZE 10
+  #define LM_SIZE 5
   static float LM[LM_SIZE];      // LastMeasurements
   static byte index = 0;
   static float sum = 0;

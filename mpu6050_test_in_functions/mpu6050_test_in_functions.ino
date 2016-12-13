@@ -24,8 +24,8 @@ void loop(){
   //Serial.print(" | GyZ = "); Serial.println(GyZ);
   Serial.print(getSlopeDirection());
   Serial.print("\t");
-  Serial.println(getGradient());
-  delay(200);
+  Serial.println(runningAverage(getGradient()));
+  delay(100);
 }
 
 void wakeIMU(){
@@ -91,3 +91,22 @@ float toDegs(float rads){
   return degs;
 }
 
+
+float runningAverage(float M) {
+  // From http://playground.arduino.cc/Main/RunningAverage
+  #define LM_SIZE 10
+  static float LM[LM_SIZE];      // LastMeasurements
+  static byte index = 0;
+  static float sum = 0;
+  static byte count = 0;
+
+  // keep sum updated to improve speed.
+  sum -= LM[index];
+  LM[index] = M;
+  sum += LM[index];
+  index++;
+  index = index % LM_SIZE;
+  if (count < LM_SIZE) count++;
+
+  return sum / count;
+}

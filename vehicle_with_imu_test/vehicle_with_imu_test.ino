@@ -10,7 +10,7 @@ int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ;
 float AcgX, AcgY, AcgZ;
 
 #include <LiquidCrystal.h>
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+LiquidCrystal lcd(12, 11, 6, 5, 4, 3);
 
 void setup(){
   Wire.begin();           // begin talking to the IMU

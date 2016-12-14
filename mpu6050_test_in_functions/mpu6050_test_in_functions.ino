@@ -16,18 +16,18 @@ void setup(){
 }
 void loop(){
   readIMU();
-  AcgX = (float)AcX/16384;
-  AcgY = (float)AcY/16384;
-  AcgZ = (float)AcZ/16384;
+  //AcgX = (float)AcX/16384;
+  //AcgY = (float)AcY/16384;
+  //AcgZ = (float)AcZ/16384;
   //Serial.print("AcX = "); Serial.print(AcgX);
   //Serial.print(" | AcY = "); Serial.print(AcgY);
   //Serial.print(" | AcZ = "); Serial.print(AcgZ);
   //Serial.print(" | GyX = "); Serial.print(GyX);
   //Serial.print(" | GyY = "); Serial.print(GyY);
   //Serial.print(" | GyZ = "); Serial.println(GyZ);
-  Serial.print(getSlopeDirection());
+  Serial.print(getSlopeDirection(), 0);
   Serial.print("\t");
-  Serial.println(runningAverage(getGradient()));
+  Serial.println(runningAverage(getGradient()), 0);
   //Serial.println(getGradient());
   delay(100);
 }

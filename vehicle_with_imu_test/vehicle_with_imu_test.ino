@@ -17,6 +17,40 @@ void setup(){
   wakeIMU();              // mpu6050 starts in power-saving mode
   Serial.begin(57600);    // begin talking to the motor controller
   lcd.begin(16, 2);       // 2 lines, 16 columns
+  
+  while ( millis() < 2000 ) {
+    readIMU();              // Fetch data from IMU
+    lcd.setCursor(0, 1);                    // second line
+    lcd.print((int)runningAverage(getGradient()));  // How steep is the slope?
+    delay(20);
+  }
+  //
+
+  Serial.print("#Sb018,018");   // 25% speed on each motor
+  Serial.print("#d1f");         // both motors forward
+  Serial.print("#d2f");
+  delay(500);
+
+  while (runningAverage(getGradient()) < 22)
+  {
+    readIMU();
+    lcd.setCursor(0, 1);                    // second line
+    lcd.print((int)runningAverage(getGradient()));  // How steep is the slope?
+    //delay(10);
+  }
+  Serial.print("#Sb020,020");
+  delay(500);
+
+  while (runningAverage(getGradient()) > 18)
+  {
+    readIMU();
+    lcd.setCursor(0, 1);                    // second line
+    lcd.print((int)runningAverage(getGradient()));  // How steep is the slope?
+    //delay(10);
+  }
+  
+  Serial.print("#Sb000,000");   // 25% speed on each motor
+
 }
 void loop(){
   readIMU();              // Fetch data from IMU
@@ -25,7 +59,7 @@ void loop(){
   lcd.print((int)getSlopeDirection());    // Direction along the surface of maximum downwards gradient
   lcd.setCursor(0, 1);                    // second line
   lcd.print((int)runningAverage(getGradient()));  // How steep is the slope?
-  delay(250);
+  delay(20);
 }
 
 void wakeIMU(){
@@ -108,7 +142,7 @@ float runningAverage(float M) {
   // This function from
   // http://playground.arduino.cc/Main/RunningAverage
   // Modified to work with floats
-  #define LM_SIZE 5
+  #define LM_SIZE 40
   static float LM[LM_SIZE];      // LastMeasurements
   static byte index = 0;
   static float sum = 0;

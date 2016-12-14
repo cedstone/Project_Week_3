@@ -13,18 +13,18 @@ float AcgX, AcgY, AcgZ;
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
 void setup(){
-  Wire.begin();
-  wakeIMU();
-  Serial.begin(9600);
-  lcd.begin(16, 2);
+  Wire.begin();           // begin talking to the IMU
+  wakeIMU();              // mpu6050 starts in power-saving mode
+  Serial.begin(57600);    // begin talking to the motor controller
+  lcd.begin(16, 2);       // 2 lines, 16 columns
 }
 void loop(){
-  readIMU();
+  readIMU();              // Fetch data from IMU
   lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print((int)getSlopeDirection());
-  lcd.setCursor(0, 1);
-  lcd.print((int)runningAverage(getGradient()));
+  lcd.setCursor(0, 0);                    // First line
+  lcd.print((int)getSlopeDirection());    // Direction along the surface of maximum downwards gradient
+  lcd.setCursor(0, 1);                    // second line
+  lcd.print((int)runningAverage(getGradient()));  // How steep is the slope?
   delay(250);
 }
 
@@ -78,25 +78,36 @@ float getSlopeDirection(){
 float getGradient(){
   float rads = 0;
   float degs = 0;
-  AcgZ = (float)AcZ/16384;
-  if (AcgZ >= 1) { AcgZ = 0.99; }
+  AcgZ = (float)AcZ/16384;          // Correct to units of 9.81m/s^2
+  /* 
+   * Potential for bugginess: 
+   * If AcgZ is greater than 1, then acos(AcgZ) is NaN 
+   * BUT if AcgZ is exactly 1, then acos(AcgZ) is zero
+   * and if acos(AcgZ) is zero, then degs is zero
+   * if degs is zero then degs to a negative power (-1.6) is infinite
+   * because 0^-1.6 == 1/(0^1.6) == 1/0
+   * To avoid this problem, the code below limits AcgZ to 0.99
+   * It's hacky, but it works!
+   */
+  if (AcgZ >= 1) { AcgZ = 0.99; }       
   if (AcgZ <= -1) { AcgZ = -0.99; }
-  rads = (float)acos(AcgZ);
-  degs = toDegs(rads);
-  //degs = degs - 10; // Hack to avoid as-yet unexplained error
-  degs =  degs - (500*(float)pow(degs, -1.6));
-  if (degs < 0 ) { degs = 0; }
+  rads = (float)acos(AcgZ);       // Get gradient, assuming vehicle is at rest, on earth, at sea level
+  degs = toDegs(rads);            // Convert from radians to degrees
+  degs =  degs - (500*(float)pow(degs, -1.6));    // Empirically found formula to correct error in angle
+  if (degs < 0 ) { degs = 0; }                    // Clamp positive, the gradient can't have a negative magnitude!
   return degs;
 }
 
 float toDegs(float rads){
-  float degs = 360*(rads/6.2832);
+  float degs = 360*(rads/6.2832);     // Is there a pre-definined valuye of pi we can use?
   return degs;
 }
 
 
 float runningAverage(float M) {
-  // From http://playground.arduino.cc/Main/RunningAverage
+  // This function from
+  // http://playground.arduino.cc/Main/RunningAverage
+  // Modified to work with floats
   #define LM_SIZE 5
   static float LM[LM_SIZE];      // LastMeasurements
   static byte index = 0;

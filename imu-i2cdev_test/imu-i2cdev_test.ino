@@ -3,6 +3,9 @@
 MPU6050 mpu;
 #define INTERRUPT_PIN 2  // use pin 2 on Arduino Uno & most boards
 
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(12, 11, 6, 5, 4, 3);
+
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
 uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
@@ -27,6 +30,8 @@ void dmpDataReady() {
 
 
 void setup() {
+    lcd.begin(16, 2);
+    lcd.print("Hello, World!");
     setupimu();
 }
 
@@ -34,16 +39,29 @@ void setup() {
 void loop() {
     if (!dmpReady) return;
     updateimu();
+
     while (!mpuInterrupt && fifoCount < packetSize) {
         Serial.print(ypr[1] * 180/M_PI);
         Serial.print("\t");
         Serial.println(ypr[2] * 180/M_PI);
+        //lcd.clear();
+      //lcd.setCursor(0, 0);
+      //lcd.print("yaw  pitch  roll");
+      //lcd.setCursor(0, 1);
+      //lcd.print((ypr[0] * 180/M_PI));  
+      
+      lcd.setCursor(5, 1);
+      lcd.print("      "); 
+      lcd.setCursor(5, 1);
+      lcd.print((int)(ypr[1] * 180/M_PI));  
+      //lcd.setCursor(10, 1);
+      //lcd.print((ypr[1] * 180/M_PI));  
     }
 }
 
 void setupimu()
 {
-      Wire.begin();
+    Wire.begin();
     Wire.setClock(400000); // 400kHz I2C clock. 
 
     Serial.begin(115200);

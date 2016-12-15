@@ -31,8 +31,11 @@ void dmpDataReady() {
 
 void setup() {
     lcd.begin(16, 2);
-    lcd.print("Hello, World!");
+    lcd.print("    pitch       ");
+    Serial.begin(57600);    // begin talking to the motor controller
     setupimu();
+    delay(2000);
+    Serial.print("#Sb020,020");
 }
 
 
@@ -41,21 +44,13 @@ void loop() {
     updateimu();
 
     while (!mpuInterrupt && fifoCount < packetSize) {
-        Serial.print(ypr[1] * 180/M_PI);
-        Serial.print("\t");
-        Serial.println(ypr[2] * 180/M_PI);
-        //lcd.clear();
-      //lcd.setCursor(0, 0);
-      //lcd.print("yaw  pitch  roll");
-      //lcd.setCursor(0, 1);
-      //lcd.print((ypr[0] * 180/M_PI));  
-      
+      int pitch = (int)(ypr[1] * 180/M_PI);
       lcd.setCursor(5, 1);
-      lcd.print("      "); 
-      lcd.setCursor(5, 1);
-      lcd.print((int)(ypr[1] * 180/M_PI));  
-      //lcd.setCursor(10, 1);
-      //lcd.print((ypr[1] * 180/M_PI));  
+      lcd.print(pitch); 
+      lcd.print("     ");  
+      if (abs(pitch) > 15){
+          Serial.print("#Sb000,000");
+      }
     }
 }
 
@@ -64,16 +59,16 @@ void setupimu()
     Wire.begin();
     Wire.setClock(400000); // 400kHz I2C clock. 
 
-    Serial.begin(115200);
+    //Serial.begin(115200);
 
-    Serial.println(F("Initializing I2C devices..."));
+    //Serial.println(F("Initializing I2C devices..."));
     mpu.initialize();
     pinMode(INTERRUPT_PIN, INPUT);
 
-    Serial.println(F("Testing device connections..."));
-    Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
+    //Serial.println(F("Testing device connections..."));
+    //Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
     
-    Serial.println(F("Initializing DMP..."));
+    //Serial.println(F("Initializing DMP..."));
     devStatus = mpu.dmpInitialize();
 
     // supply your own gyro offsets here, scaled for min sensitivity
@@ -84,14 +79,14 @@ void setupimu()
 
     // make sure it worked (returns 0 if so)
     if (devStatus == 0) {
-        Serial.println(F("Enabling DMP..."));
+        //Serial.println(F("Enabling DMP..."));
         mpu.setDMPEnabled(true);
 
-        Serial.println(F("Enabling interrupt detection (Arduino external interrupt 0)..."));
+        //Serial.println(F("Enabling interrupt detection (Arduino external interrupt 0)..."));
         attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
         mpuIntStatus = mpu.getIntStatus();
 
-        Serial.println(F("DMP ready! Waiting for first interrupt..."));
+        //Serial.println(F("DMP ready! Waiting for first interrupt..."));
         dmpReady = true;
 
         // get expected DMP packet size for later comparison
@@ -100,9 +95,9 @@ void setupimu()
         // ERROR!
         // 1 = initial memory load failed
         // 2 = DMP configuration updates failed
-        Serial.print(F("DMP Initialization failed (code "));
-        Serial.print(devStatus);
-        Serial.println(F(")"));
+        //Serial.print(F("DMP Initialization failed (code "));
+        //Serial.print(devStatus);
+        //Serial.println(F(")"));
     }
 }
 
@@ -119,7 +114,7 @@ void updateimu()
     if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
         // reset so we can continue cleanly
         mpu.resetFIFO();
-        Serial.println(F("FIFO overflow!"));
+        //Serial.println(F("FIFO overflow!"));
 
     // otherwise, check for DMP data ready interrupt (this should happen frequently)
     } else if (mpuIntStatus & 0x02) {

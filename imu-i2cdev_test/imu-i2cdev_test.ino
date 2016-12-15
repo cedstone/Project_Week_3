@@ -58,20 +58,29 @@ void loop() {
       }
       if ((stage == 1) && (abs(pitch) < 10)){
           stage = 2;    // on top of ramp
-          /* oldencodervalue = readEncoder(1); */
           Serial.print("#Sb020,020");
           oldtime = millis();
       }
-      /*if ((stage == 2) && (readEncoder(1) > (oldencodervalue + (m*0.2))))*/
-       if ((stage == 2) && (millis() > (oldtime+500))) 
+       if ((stage == 2) && (millis() > (oldtime+50))) 
       {
         stage = 3;
+        oldtime = millis();
+       Serial.print("#Sb000,000");       
       }
       
-      if (stage == 3)
+      if ((stage == 3) && (millis() > (oldtime+5000)))
       {
-           Serial.print("#Sb000,000");
+        stage = 4;
+        oldtime = millis();
+        Serial.print("#d1f");
+        Serial.print("#d2r");
+        Serial.print("#Sb020,020");
       }
+      if ((stage == 4) && (millis() > (oldtime+6500)))
+     {
+      Serial.print("#Sb000,000");
+     }
+      
     }
 }
 

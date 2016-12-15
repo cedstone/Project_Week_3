@@ -28,6 +28,9 @@ void dmpDataReady() {
     mpuInterrupt = true;
 }
 
+int stage = 0;    //on floor
+const int m = 134;  // one metre
+unsigned long oldtime = 0;
 
 void setup() {
     lcd.begin(16, 2);
@@ -40,6 +43,7 @@ void setup() {
 
 
 void loop() {
+    //int oldencodervalue = 0;
     if (!dmpReady) return;
     updateimu();
 
@@ -48,8 +52,25 @@ void loop() {
       lcd.setCursor(5, 1);
       lcd.print(pitch); 
       lcd.print("     ");  
-      if (abs(pitch) > 15){
-          Serial.print("#Sb000,000");
+      if ((stage == 0) && (abs(pitch) > 10)){
+          stage = 1;    // on ramp
+          Serial.print("#Sb025,025");
+      }
+      if ((stage == 1) && (abs(pitch) < 10)){
+          stage = 2;    // on top of ramp
+          /* oldencodervalue = readEncoder(1); */
+          Serial.print("#Sb020,020");
+          oldtime = millis();
+      }
+      /*if ((stage == 2) && (readEncoder(1) > (oldencodervalue + (m*0.2))))*/
+       if ((stage == 2) && (millis() > (oldtime+500))) 
+      {
+        stage = 3;
+      }
+      
+      if (stage == 3)
+      {
+           Serial.print("#Sb000,000");
       }
     }
 }
@@ -139,5 +160,28 @@ void updateimu()
         //Serial.println(ypr[2] * 180/M_PI);
 
     }
+}
+
+long unsigned int readEncoder (int side) {
+  long unsigned int encoder = 0;
+  
+  // request the encoder value for motor 1 (assuming 1=2)
+  if (side == 1)
+  {
+     Serial.write("#e1");
+  }
+  else
+  {
+    Serial.write("#e2");
+  }
+  
+  // wait breifly for response
+  delay(50);
+
+  encoder = Serial.read();
+  encoder += (Serial.read()<<8);
+  encoder += (Serial.read()<<16);
+  encoder += (Serial.read()<<24);
+  return encoder;
 }
 

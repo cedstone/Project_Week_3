@@ -31,6 +31,7 @@ void dmpDataReady() {
 int stage = 0;    //on floor
 const int m = 134;  // one metre
 unsigned long oldtime = 0;
+unsigned long oldyaw = 0;
 
 void setup() {
     lcd.begin(16, 2);
@@ -49,19 +50,23 @@ void loop() {
 
     while (!mpuInterrupt && fifoCount < packetSize) {
       int pitch = (int)(ypr[1] * 180/M_PI);
+      int yaw = (int)(ypr[0] * 180/M_PI);
+      lcd.setCursor(0, 1);
+      lcd.print(yaw); 
+      lcd.print("   ");  
       lcd.setCursor(5, 1);
       lcd.print(pitch); 
       lcd.print("     ");  
-      if ((stage == 0) && (abs(pitch) > 10)){
+      if ((stage == 0) && (abs(pitch) > 15)){
           stage = 1;    // on ramp
           Serial.print("#Sb025,025");
       }
-      if ((stage == 1) && (abs(pitch) < 10)){
+      if ((stage == 1) && (abs(pitch) < 15)){
           stage = 2;    // on top of ramp
-          Serial.print("#Sb020,020");
+          Serial.print("#Sb025,025");
           oldtime = millis();
       }
-       if ((stage == 2) && (millis() > (oldtime+50))) 
+       if ((stage == 2) && (millis() > (oldtime+1))) 
       {
         stage = 3;
         oldtime = millis();
@@ -72,11 +77,12 @@ void loop() {
       {
         stage = 4;
         oldtime = millis();
+        oldyaw = yaw;
         Serial.print("#d1f");
         Serial.print("#d2r");
-        Serial.print("#Sb020,020");
+        Serial.print("#Sb015,015");
       }
-      if ((stage == 4) && (millis() > (oldtime+6500)))
+      if ((stage == 4) && (yaw == oldyaw-1) && (millis() > (oldtime+1000)))
      {
       Serial.print("#Sb000,000");
      }

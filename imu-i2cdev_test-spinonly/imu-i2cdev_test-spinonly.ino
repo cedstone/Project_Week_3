@@ -28,7 +28,7 @@ void dmpDataReady() {
     mpuInterrupt = true;
 }
 
-int stage = 3;    //on floor
+int stage = 99;    //on floor
 const int m = 134;  // one metre
 unsigned long oldtime = 0;
 unsigned long oldyaw = 0;
@@ -72,6 +72,11 @@ void loop() {
         oldtime = millis();
        Serial.print("#Sb000,000");       
       }
+
+      if ((stage == 99) && (millis < 20000))
+      {
+        
+      }
       
       if ((stage == 3) && (millis() > (oldtime+5000)))
       {
@@ -80,7 +85,7 @@ void loop() {
         oldyaw = yaw;
         Serial.print("#d1f");
         Serial.print("#d2r");
-        Serial.print("#Sb015,015");
+        Serial.print("#Sb025,025");
       }
       if ((stage == 4) && (yaw == oldyaw-1) && (millis() > (oldtime+1000)))
      {

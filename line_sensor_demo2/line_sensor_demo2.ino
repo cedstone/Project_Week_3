@@ -27,12 +27,27 @@ void loop()
    t = 0;
  }
 
-//printData();
 if(millis() < 5000){
   Serial.println(millis()/100);
 }
 else{
   printData();
+  //Serial.println(weightedAverage(data));
+  float sum1 = 0;
+  float sum2 = 0;
+  float result = 0;
+  for(int i=0; i<=14; i+=2){
+    sum1 += (i*(255-data[i]));
+  }
+  for(int i=0; i<=14; i+=2){
+    sum2 += (255-data[i]);
+  }
+  result = sum1/sum2;
+  //result = map(result, 0, 14, -127, 127);
+  result *= ((float)255/14);
+  result -= 127;
+  Serial.println((int)result);
+  // The above should really be a function, pending getting the pointers right.
 }
 
  if(millis()>2500 && millis()<2600){
@@ -61,3 +76,17 @@ void printData(){
  Serial.println("");
 }
 
+// Fix this to pass the array as a pointer (the below won't work)
+/*
+int weightedAverage(data[0]){
+  int sum1 = 0;
+  int sum2 = 0;
+  for(int i=0; i<=7; i++){
+    sum1 += (i*data[i]);
+  }
+  for(int i=0; i<=7; i++){
+    sum2 += data[i];
+  }
+  return int(sum1/sum2);
+}
+*/

@@ -1,10 +1,11 @@
 #include <Wire.h>
 #define uchar unsigned char
 uchar t;
+uchar incomingvalue;
 //void send_data(short a1,short b1,short c1,short d1,short e1,short f1);
 uchar data[16];
-uchar blackdata[8];
-uchar whitedata[8];
+uchar blackdata[] = {0, 0, 0, 0, 0, 0, 0, 0};
+uchar whitedata[] = {255, 255, 255, 255, 255, 255, 255, 255};
 void setup()
 {
  Wire.begin(); // join i2c bus (address optional for master)
@@ -17,16 +18,21 @@ void loop()
  Wire.requestFrom(9, 16); // request 16 bytes from slave device #9
  while (Wire.available()) // slave may send less than requested
  {
- data[t] = Wire.read(); // receive a byte as character
- if (t < 15)
- t++;
- else
- t = 0;
+   incomingvalue = Wire.read();
+   data[t] = constrain(incomingvalue, blackdata[t/2], whitedata[t/2]);
+   data[t] = map(data[t], blackdata[t/2], whitedata[t/2], 0, 255);
+   if (t < 15)
+   t++;
+   else
+   t = 0;
  }
 
 //printData();
 if(millis() < 5000){
   Serial.println(millis()/100);
+}
+else{
+  printData();
 }
 
  if(millis()>2500 && millis()<2600){

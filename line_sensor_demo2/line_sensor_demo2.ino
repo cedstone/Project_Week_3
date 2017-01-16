@@ -20,22 +20,7 @@ void loop()
  else
  t = 0;
  }
- /*Serial.print("data[0]:");
- Serial.println(data[0]);
- Serial.print("data[2]:");
- Serial.println(data[2]);
- Serial.print("data[4]:");
- Serial.println(data[4]);
- Serial.print("data[6]:");
- Serial.println(data[6]);
- Serial.print("data[8]:");
- Serial.println(data[8]);
- Serial.print("data[10]:");
- Serial.println(data[10]);
- Serial.print("data[12]:");
- Serial.println(data[12]);
- Serial.print("data[14]:");
- Serial.println(data[14]);*/
+
 
  for(int i=0; i<=14; i+=2){
   Serial.print(data[i]);

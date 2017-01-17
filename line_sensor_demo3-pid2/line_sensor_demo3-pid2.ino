@@ -14,17 +14,19 @@ uchar whitedata[] = {255, 255, 255, 255, 255, 255, 255, 255};
 
 #define button0 9
 #define button1 10
+#define button2 13
 
-float Kp = 0;
-float Ki = 0;
-float Kd = 0;
+float Kp = 0.5;
+float Ki = 0.0;
+float Kd = 1.5;
 float errorOld = 0;
 float error = 0;
 float errorSum = 0;
 float errorNew = 0;
 float pidoutput = 0;
-#define Ka Kp    // The coefficient we're adjusting at the moment;
-#define adjustStep 1
+//#define Ka Kd    // The coefficient we're adjusting at the moment;
+int editing = 1;
+#define adjustStep 0.1
 
 float leftMotorSpeed = 0;
 float rightMotorSpeed = 0;
@@ -53,7 +55,7 @@ void setup()
 void loop()
 {
  getRawData();
- updatePID();
+ handleButtons();
  updateDisplay();
  pidoutput = PID((long)weightedAverage(data));
  //
@@ -119,15 +121,29 @@ int weightedAverage(uchar data[]){
 }
 
 
-void updatePID(void)
+void handleButtons(void)
 {
   if(digitalRead(button0) == LOW){
-    Ka += adjustStep;
+    if (editing == 0){ Kp += adjustStep;}
+    if (editing == 1){ Ki += adjustStep;}
+    if (editing == 2){ Kd += adjustStep;}
     updateDisplay();
+    delay(100);
   }
   if(digitalRead(button1) == LOW) {
-    Ka -= adjustStep;
+    if (editing == 0){ Kp -= adjustStep;}
+    if (editing == 1){ Ki -= adjustStep;}
+    if (editing == 2){ Kd -= adjustStep;}
     updateDisplay();
+    delay(100);
+  }
+  if(digitalRead(button2) == LOW) {
+    editing++;
+    if (editing >= 3) {
+      editing = 0;
+    }
+    updateDisplay();
+    delay(500);
   }
 }
 
@@ -138,9 +154,15 @@ void updateDisplay(void)
   lcd.print(weightedAverage(data));
   lcd.print("        ");
   lcd.setCursor(0, 1);
-  lcd.print("Ka = ");
-  lcd.print((int)Ka); 
+  lcd.print("  p");
+  lcd.print((int)(Kp*10)); 
+  lcd.print("   i");
+  lcd.print((int)(Ki*10)); 
+  lcd.print("   d");
+  lcd.print((int)(Kd*10)); 
   lcd.print("          ");
+  lcd.setCursor((editing*5)+1, 1);
+  lcd.print(">");
 }
 
 void getRawData(void){
@@ -188,12 +210,13 @@ void callibrate(){
  lcd.print("* Callibration *");
  lcd.setCursor(0, 1);
  lcd.print("      done     ");
- delay(500);
+ delay(3000);
 }
 
 float PID(long errorNew)
 {
   // PID loop
+  errorNew *= -1;
   errorOld = error;        // Save the old error for differential component
   error = errorNew;        // Calculate the error in position
   errorSum += error;

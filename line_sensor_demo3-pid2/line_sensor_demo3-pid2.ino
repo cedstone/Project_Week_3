@@ -26,54 +26,16 @@ void setup()
  Wire.begin(); // join i2c bus (address optional for master)
  Serial.begin(9600); // start serial for output
  t = 0;
- Serial.println("Recording black at 25, white at 50");
+ callibrate();
 }
+
 void loop()
 {
- Wire.requestFrom(9, 16); // request 16 bytes from slave device #9
- while (Wire.available()) // slave may send less than requested
- {
-   incomingvalue = Wire.read();   // Read value
-   // Constrain and map value to fit between the limits of calibration values
-   // The "/2" terms are there because the odd-numbered bytes of raw data are useless, and not recorded in blackdata and whitedata
-   data[t] = constrain(incomingvalue, blackdata[t/2], whitedata[t/2]);
-   data[t] = map(data[t], blackdata[t/2], whitedata[t/2], 0, 255);
-   if (t < 15)
-   t++;
-   else
-   t = 0;
- }
-
-if(millis() < 5100){
-  Serial.println(millis()/100);
-  // Counting during calibration
-}
-else{
-  printData();
-  //Serial.println(weightedAverage(data));
-  Serial.print(Ka);
-  delay(3000);
-}
-
-//Callibrate at specific times
- if(millis()>2500 && millis()<2600){
-    for(int i=0; i<=7; i++){
-      blackdata[i] = data[2*i];
-   }
-   Serial.print("Recorded black values as ");
-   printData();
- }
- if(millis()>5000 && millis()<5100){
-    for(int i=0; i<=7; i++){
-      whitedata[i] = data[2*i];
-   }
-   Serial.print("Recorded white values as ");
-   printData();
- }
+ getRawData();
 
  updatePID();
- 
- delay(500);
+ updateDisplay();
+ delay(200);
 }
 
 void printData(){
@@ -117,10 +79,61 @@ void updatePID(void)
 
 void updateDisplay(void)
 {
+  lcd.setCursor(0, 0);
+  lcd.print("Error = ");
+  lcd.print(weightedAverage(data));
+  lcd.print("        ");
   lcd.setCursor(0, 1);
-  lcd.print((int)Ka);
-  
-  lcd.print("      ");
+  lcd.print("Ka = ");
+  lcd.print((int)Ka); 
+  lcd.print("          ");
 }
 
+void getRawData(void){
+ Wire.requestFrom(9, 16); // request 16 bytes from slave device #9
+ while (Wire.available()) // slave may send less than requested
+ {
+   incomingvalue = Wire.read();   // Read value
+   // Constrain and map value to fit between the limits of calibration values
+   // The "/2" terms are there because the odd-numbered bytes of raw data are useless, and not recorded in blackdata and whitedata
+   data[t] = constrain(incomingvalue, blackdata[t/2], whitedata[t/2]);
+   data[t] = map(data[t], blackdata[t/2], whitedata[t/2], 0, 255);
+   if (t < 15)
+   t++;
+   else
+   t = 0;
+ }
+}
+
+void callibrate(){
+ Serial.println("Expose to black surface, then push black button");
+ lcd.clear();
+ lcd.print("* Callibration *");
+ lcd.setCursor(0, 1);
+ lcd.print("    black...    ");
+ while(digitalRead(button0) == HIGH){};
+ for(int i=0; i<=7; i++){
+    getRawData();
+    blackdata[i] = data[2*i];
+ }
+ Serial.print("Recorded black values as ");
+ printData();
+ Serial.println("Expose to white surface, then push white button");
+ lcd.clear();
+ lcd.print("* Callibration *");
+ lcd.setCursor(0, 1);
+ lcd.print("    white...    ");
+ while(digitalRead(button1) == HIGH){};
+ for(int i=0; i<=7; i++){
+    getRawData();
+    whitedata[i] = data[2*i];
+ }
+ Serial.print("Recorded white values as ");
+ printData();
+ lcd.clear();
+ lcd.print("* Callibration *");
+ lcd.setCursor(0, 1);
+ lcd.print("      done     ");
+ delay(500);
+}
 

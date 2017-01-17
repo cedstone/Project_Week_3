@@ -18,7 +18,9 @@ void loop()
  Wire.requestFrom(9, 16); // request 16 bytes from slave device #9
  while (Wire.available()) // slave may send less than requested
  {
-   incomingvalue = Wire.read();
+   incomingvalue = Wire.read();   // Read value
+   // Constrain and map value to fit between the limits of calibration values
+   // The "/2" terms are there because the odd-numbered bytes of raw data are useless, and not recorded in blackdata and whitedata
    data[t] = constrain(incomingvalue, blackdata[t/2], whitedata[t/2]);
    data[t] = map(data[t], blackdata[t/2], whitedata[t/2], 0, 255);
    if (t < 15)
@@ -29,28 +31,14 @@ void loop()
 
 if(millis() < 5000){
   Serial.println(millis()/100);
+  // Counting during calibration
 }
 else{
   printData();
-  Serial.println(weightedAverage(&data[0]));
-  /*
-  float sum1 = 0;
-  float sum2 = 0;
-  float result = 0;
-  for(int i=0; i<=14; i+=2){
-    sum1 += (i*(255-data[i]));
-  }
-  for(int i=0; i<=14; i+=2){
-    sum2 += (255-data[i]);
-  }
-  result = sum1/sum2;
-  //result = map(result, 0, 14, -127, 127);
-  result *= ((float)255/14);
-  result -= 127;
-  Serial.println((int)result);*/
-  // The above should really be a function, pending getting the pointers right.
+  Serial.println(weightedAverage(data));
 }
 
+//Callibrate at specific times
  if(millis()>2500 && millis()<2600){
     for(int i=0; i<=7; i++){
       blackdata[i] = data[2*i];
@@ -77,8 +65,8 @@ void printData(){
  Serial.println("");
 }
 
-
-int weightedAverage(char data[]){
+// Find the position, right to left, of the line
+int weightedAverage(uchar data[]){
   float sum1 = 0;
   float sum2 = 0;
   float result = 0;

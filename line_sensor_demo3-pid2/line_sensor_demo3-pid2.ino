@@ -2,6 +2,9 @@
 #define uchar unsigned char
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(12, 11, 6, 5, 4, 3);
+#include <SoftwareSerial.h> // Include the Software Serial library to talk to the robot
+SoftwareSerial robot(6,7);              // Configure the software serial connection to the robot
+
 uchar t;
 uchar incomingvalue;
 //void send_data(short a1,short b1,short c1,short d1,short e1,short f1);
@@ -12,9 +15,26 @@ uchar whitedata[] = {255, 255, 255, 255, 255, 255, 255, 255};
 #define button0 9
 #define button1 10
 
-float Kp, Ki, Kd; // Variables to store the PID constants
+float Kp = 0;
+float Ki = 0;
+float Kd = 0;
+float errorOld = 0;
+float error = 0;
+float errorSum = 0;
+float errorNew = 0;
+float pidoutput = 0;
 #define Ka Kp    // The coefficient we're adjusting at the moment;
 #define adjustStep 1
+
+float leftMotorSpeed = 0;
+float rightMotorSpeed = 0;
+// Default speed of the motors, this is modified by the PID output
+#define leftMotorBaseSpeed 20
+#define rightMotorBaseSpeed 20
+
+// Speed limits of the motors
+#define min_speed -30
+#define max_speed 50
 
 void setup()
 {
@@ -25,6 +45,7 @@ void setup()
   
  Wire.begin(); // join i2c bus (address optional for master)
  Serial.begin(9600); // start serial for output
+ robot.begin(57600);  // Start serial for output to robot
  t = 0;
  callibrate();
 }
@@ -32,10 +53,43 @@ void setup()
 void loop()
 {
  getRawData();
-
  updatePID();
  updateDisplay();
- delay(200);
+ pidoutput = PID((long)weightedAverage(data));
+ //
+leftMotorSpeed = leftMotorBaseSpeed + pidoutput;     // Calculate the modified motor speed
+rightMotorSpeed = rightMotorBaseSpeed - pidoutput;
+
+if(leftMotorSpeed > 0)
+{
+  leftMotorSpeed = constrain(leftMotorSpeed, 0, max_speed);
+  robot.write("#D1f");
+  robot.write("#S1");
+  robot.print((int)leftMotorSpeed);
+}
+else
+{
+  leftMotorSpeed = constrain(leftMotorSpeed, min_speed, 0);
+  robot.write("#D1r");
+  robot.write("#S1");
+  robot.print(-(int)leftMotorSpeed);
+}
+if(rightMotorSpeed > 0)
+{
+  rightMotorSpeed = constrain(rightMotorSpeed, 0, max_speed);
+  robot.write("#D2f");
+  robot.write("#S2");
+  robot.print((int)rightMotorSpeed);
+}
+else
+{
+  rightMotorSpeed = constrain(rightMotorSpeed, min_speed, 0);
+  robot.write("#D2r");
+  robot.write("#S2");
+  robot.print(-(int)rightMotorSpeed);
+}
+ 
+ delay(5);
 }
 
 void printData(){
@@ -135,5 +189,18 @@ void callibrate(){
  lcd.setCursor(0, 1);
  lcd.print("      done     ");
  delay(500);
+}
+
+float PID(long errorNew)
+{
+  // PID loop
+  errorOld = error;        // Save the old error for differential component
+  error = errorNew;        // Calculate the error in position
+  errorSum += error;
+  float proportional = error * Kp;  // Calculate the components of the PID
+  float integral = errorSum * Ki;
+  float differential = (error - errorOld) * Kd;
+  long output = proportional + integral + differential;  // Calculate the result
+  return output;
 }
 

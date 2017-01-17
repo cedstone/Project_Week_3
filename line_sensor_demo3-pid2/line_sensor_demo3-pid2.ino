@@ -1,13 +1,28 @@
 #include <Wire.h>
 #define uchar unsigned char
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(12, 11, 6, 5, 4, 3);
 uchar t;
 uchar incomingvalue;
 //void send_data(short a1,short b1,short c1,short d1,short e1,short f1);
 uchar data[16];
 uchar blackdata[] = {0, 0, 0, 0, 0, 0, 0, 0};
 uchar whitedata[] = {255, 255, 255, 255, 255, 255, 255, 255};
+
+#define button0 9
+#define button1 10
+
+float Kp, Ki, Kd; // Variables to store the PID constants
+#define Ka Kp    // The coefficient we're adjusting at the moment;
+#define adjustStep 1
+
 void setup()
 {
+ lcd.begin(16, 2);
+ lcd.print("Button test");
+ pinMode(button0, INPUT_PULLUP);
+ pinMode(button1, INPUT_PULLUP);
+  
  Wire.begin(); // join i2c bus (address optional for master)
  Serial.begin(9600); // start serial for output
  t = 0;
@@ -35,7 +50,8 @@ if(millis() < 5100){
 }
 else{
   printData();
-  Serial.println(weightedAverage(data));
+  //Serial.println(weightedAverage(data));
+  Serial.print(Ka);
   delay(3000);
 }
 
@@ -54,6 +70,8 @@ else{
    Serial.print("Recorded white values as ");
    printData();
  }
+
+ updatePID();
  
  delay(500);
 }
@@ -83,4 +101,26 @@ int weightedAverage(uchar data[]){
   result -= 127;
   return (int)result;
 }
+
+
+void updatePID(void)
+{
+  if(digitalRead(button0) == LOW){
+    Ka += adjustStep;
+    updateDisplay();
+  }
+  if(digitalRead(button1) == LOW) {
+    Ka -= adjustStep;
+    updateDisplay();
+  }
+}
+
+void updateDisplay(void)
+{
+  lcd.setCursor(0, 1);
+  lcd.print((int)Ka);
+  
+  lcd.print("      ");
+}
+
 

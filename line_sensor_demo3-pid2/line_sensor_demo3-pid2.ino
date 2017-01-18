@@ -16,9 +16,9 @@ uchar whitedata[] = {255, 255, 255, 255, 255, 255, 255, 255};
 #define button1 10
 #define button2 13
 
-float Kp = 0.5;
+float Kp = 2.5; // 2.0 works
 float Ki = 0.0;
-float Kd = 1.5;
+float Kd = 0.0; // 0.5 works
 float errorOld = 0;
 float error = 0;
 float errorSum = 0;
@@ -35,8 +35,8 @@ float rightMotorSpeed = 0;
 #define rightMotorBaseSpeed 20
 
 // Speed limits of the motors
-#define min_speed -30
-#define max_speed 50
+#define min_speed -25
+#define max_speed 25
 
 void setup()
 {
@@ -91,7 +91,6 @@ else
   robot.print(-(int)rightMotorSpeed);
 }
  
- delay(5);
 }
 
 void printData(){
@@ -153,15 +152,23 @@ void updateDisplay(void)
   lcd.print("Error = ");
   lcd.print(weightedAverage(data));
   lcd.print("        ");
-  lcd.setCursor(0, 1);
-  lcd.print("  p");
+  lcd.setCursor(1, 1);
+  lcd.print("p");
   lcd.print((int)(Kp*10)); 
-  lcd.print("   i");
+  lcd.print("   ");
+  lcd.setCursor(7, 1);
+  lcd.print("i");
   lcd.print((int)(Ki*10)); 
-  lcd.print("   d");
+  lcd.print("   ");
+  lcd.setCursor(12, 1);
+  lcd.print("d");
   lcd.print((int)(Kd*10)); 
   lcd.print("          ");
-  lcd.setCursor((editing*5)+1, 1);
+  int pointerPos = 0;
+  if(editing==0){pointerPos = 0;}
+  if(editing==1){pointerPos = 6;}
+  if(editing==2){pointerPos = 11;}
+  lcd.setCursor(pointerPos, 1);
   lcd.print(">");
 }
 

@@ -80,10 +80,10 @@ void printData()
 
 int weightedAverage(uchar data[])
 {
-  // Find the position, right to left, of the line
-  float sum1 = 0;
-  float sum2 = 0;
-  float result = 0;
+  // Find the position, right to left, of the line - now with 100% fewer floats!
+  int sum1 = 0;
+  int sum2 = 0;
+  int result = 0;
   for (int i = 0; i <= 14; i += 2){
     sum1 += (i * (255 - data[i]));
   }
@@ -91,9 +91,9 @@ int weightedAverage(uchar data[])
     sum2 += (255 - data[i]);
   }
   result = sum1 / sum2;
-  result *= ((float)255 / 14);
+  result *= 18;
   result -= 127;
-  return (int)result;
+  return result;
 }
 
 void setMotorSpeed(){

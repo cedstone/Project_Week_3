@@ -29,9 +29,10 @@ int editing = 0;              // Which of the PID constants are we editing at th
 #define adjustStep 0.1        // Amount by which to increment or decrement the PID constants
 
 // PID coefficients (can be changed during run)
-float Kp = 2.5;               // 2.0 works
-float Ki = 0.0;               // non-zero values cause continuous spinning
-float Kd = 0.0;               // 0.5 works
+#define Ku 2.24
+float Kp = 0.8*Ku;            // 2.0 works
+float Ki = 0.0;               // large values cause continuous spinning
+float Kd = 0.125*Ku;          // 0.5 works
 // Variables used in PID function (These should probably not be global)
 float errorOld = 0;           // The previous error value, used to calculate the derivative
 float errorNew = 0;           // The new error value...
@@ -41,8 +42,8 @@ float pidoutput = 0;          // Result of PID calculation
 
 float leftMotorSpeed = 0;     // Self explanatory
 float rightMotorSpeed = 0;
-#define min_speed -25
-#define max_speed 25
+#define min_speed -18
+#define max_speed 23
 #define leftMotorBaseSpeed 20 // Default speed (if going straight forward)
 #define rightMotorBaseSpeed 20
 
@@ -61,8 +62,8 @@ void setup()
 void loop()
 {
   getRawData();                      // Fetch data from line sensor
-  handleButtons();                   // Check if any of the buttons have been pressed, and react accordingly
-  updateDisplay();                   // Send error and PID values to LCD
+  //handleButtons();                   // Check if any of the buttons have been pressed, and react accordingly
+  //updateDisplay();                   // Send error and PID values to LCD
   setMotorSpeed();                   // perform WA, and use PID to choose motor speeds
 }
 
@@ -164,10 +165,14 @@ void handleButtons(void){
 }
 
 void updateDisplay(void){
+  /*
   lcd.setCursor(0, 0);
   lcd.print("Error = ");
   lcd.print(weightedAverage(data));
   lcd.print("        ");
+  */
+  lcd.setCursor(0, 1);
+  lcd.print(" ");
   lcd.setCursor(1, 1);
   lcd.print("p");
   lcd.print((int)(Kp * 10));

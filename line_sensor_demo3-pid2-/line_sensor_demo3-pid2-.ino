@@ -29,9 +29,9 @@ int editing = 0;              // Which of the PID constants are we editing at th
 #define adjustStep 0.1        // Amount by which to increment or decrement the PID constants
 
 // PID coefficients (can be changed during run)
-float Kp = 2.5;   // 2.0 works
-float Ki = 0.0;   // non-zero values cause continuous spinning
-float Kd = 0.0;   // 0.5 works
+float Kp = 2.5;               // 2.0 works
+float Ki = 0.0;               // non-zero values cause continuous spinning
+float Kd = 0.0;               // 0.5 works
 // Variables used in PID function (These should probably not be global)
 float errorOld = 0;           // The previous error value, used to calculate the derivative
 float errorNew = 0;           // The new error value...
@@ -77,55 +77,16 @@ void printData()
   Serial.println("");
 }
 
-void setMotorSpeed()
-{
-  pidoutput = PID((long)weightedAverage(data));
-  leftMotorSpeed = leftMotorBaseSpeed + pidoutput;
-  rightMotorSpeed = rightMotorBaseSpeed - pidoutput;
-
-  if (leftMotorSpeed > 0)
-  {
-    leftMotorSpeed = constrain(leftMotorSpeed, 0, max_speed);
-    robot.write("#D1f");
-    robot.write("#S1");
-    robot.print((int)leftMotorSpeed);
-  }
-  else
-  {
-    leftMotorSpeed = constrain(leftMotorSpeed, min_speed, 0);
-    robot.write("#D1r");
-    robot.write("#S1");
-    robot.print(-(int)leftMotorSpeed);
-  }
-  if (rightMotorSpeed > 0)
-  {
-    rightMotorSpeed = constrain(rightMotorSpeed, 0, max_speed);
-    robot.write("#D2f");
-    robot.write("#S2");
-    robot.print((int)rightMotorSpeed);
-  }
-  else
-  {
-    rightMotorSpeed = constrain(rightMotorSpeed, min_speed, 0);
-    robot.write("#D2r");
-    robot.write("#S2");
-    robot.print(-(int)rightMotorSpeed);
-  }
-}
-
-
 int weightedAverage(uchar data[])
 {
   // Find the position, right to left, of the line
   float sum1 = 0;
   float sum2 = 0;
   float result = 0;
-  for (int i = 0; i <= 14; i += 2)
-  {
+  for (int i = 0; i <= 14; i += 2){
     sum1 += (i * (255 - data[i]));
   }
-  for (int i = 0; i <= 14; i += 2)
-  {
+  for (int i = 0; i <= 14; i += 2){
     sum2 += (255 - data[i]);
   }
   result = sum1 / sum2;
@@ -134,11 +95,39 @@ int weightedAverage(uchar data[])
   return (int)result;
 }
 
+void setMotorSpeed(){
+  pidoutput = PID((long)weightedAverage(data));
+  leftMotorSpeed = leftMotorBaseSpeed + pidoutput;
+  rightMotorSpeed = rightMotorBaseSpeed - pidoutput;
 
-void handleButtons(void)
-{
-  if (digitalRead(button0) == LOW)
-  {
+  if (leftMotorSpeed > 0){
+    leftMotorSpeed = constrain(leftMotorSpeed, 0, max_speed);
+    robot.write("#D1f");
+    robot.write("#S1");
+    robot.print((int)leftMotorSpeed);
+  }
+  else{
+    leftMotorSpeed = constrain(leftMotorSpeed, min_speed, 0);
+    robot.write("#D1r");
+    robot.write("#S1");
+    robot.print(-(int)leftMotorSpeed);
+  }
+  if (rightMotorSpeed > 0){
+    rightMotorSpeed = constrain(rightMotorSpeed, 0, max_speed);
+    robot.write("#D2f");
+    robot.write("#S2");
+    robot.print((int)rightMotorSpeed);
+  }
+  else{
+    rightMotorSpeed = constrain(rightMotorSpeed, min_speed, 0);
+    robot.write("#D2r");
+    robot.write("#S2");
+    robot.print(-(int)rightMotorSpeed);
+  }
+}
+
+void handleButtons(void){
+  if (digitalRead(button0) == LOW){
     if (editing == 0) {
       Kp += adjustStep;
     }
@@ -151,8 +140,7 @@ void handleButtons(void)
     updateDisplay();
     delay(100);
   }
-  if (digitalRead(button1) == LOW)
-  {
+  if (digitalRead(button1) == LOW){
     if (editing == 0) {
       Kp -= adjustStep;
     }
@@ -165,7 +153,7 @@ void handleButtons(void)
     updateDisplay();
     delay(100);
   }
-  if (digitalRead(button2) == LOW) {
+  if (digitalRead(button2) == LOW){
     editing++;
     if (editing >= 3) {
       editing = 0;
@@ -175,8 +163,7 @@ void handleButtons(void)
   }
 }
 
-void updateDisplay(void)
-{
+void updateDisplay(void){
   lcd.setCursor(0, 0);
   lcd.print("Error = ");
   lcd.print(weightedAverage(data));
@@ -207,8 +194,7 @@ void updateDisplay(void)
   lcd.print(">");
 }
 
-void getRawData(void)
-{
+void getRawData(void){
   // Read reflectivity values from line-following array
   t = 0;
   Wire.requestFrom(9, 16); // request 16 bytes from slave device #9
@@ -226,8 +212,7 @@ void getRawData(void)
   }
 }
 
-void callibrate()
-{
+void callibrate(){
   Serial.println("Expose to black surface, then push black button");
   lcd.clear();
   lcd.print("* Callibration *");
@@ -259,8 +244,7 @@ void callibrate()
   delay(3000);
 }
 
-float PID(long errorNew)
-{
+float PID(long errorNew){
   errorNew *= -1;
   errorOld = error;        // Save the old error for differential component
   error = errorNew;        // Calculate the error in position

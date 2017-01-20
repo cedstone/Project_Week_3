@@ -14,7 +14,7 @@
 #include <SoftwareSerial.h>   // Use pins other than 0 and 1 to command motor controller board
 
 LiquidCrystal lcd(12, 11, 6, 5, 4, 3);  // Pins used to connect LCD
-SoftwareSerial robot(6, 7);             // Pins used to connect motor controller
+SoftwareSerial robot(8, 7);             // Pins used to connect motor controller
 
 uchar t;                      // Array index for reflectivity data
 uchar incomingvalue;          // The most recently recieved buye
@@ -28,9 +28,15 @@ uchar whitedata[] = {255, 255, 255, 255, 255, 255, 255, 255};     //  ...upper..
 int editing = 0;              // Which of the PID constants are we editing at the moment? (0, 1 or 2)
 #define adjustStep 0.1        // Amount by which to increment or decrement the PID constants
 
+long unsigned int encoderValue[] = {0, 0};
+long unsigned int encoderValueOld[] = {0, 0};
+int encoderDistance = 0;
+int distanceCentimetres = 0;
+
+
 // PID coefficients (can be changed during run)
 #define Ku 2.24
-float Kp = 0.4; //0.8*Ku;            // 2.0 works
+float Kp = 0.6; //0.8*Ku;            // 2.0 works o r0.4
 float Ki = 0.05;               // large values cause continuous spinning
 float Kd = 1.0; //125*Ku;          // 0.5 works, so do negative values?
 // Variables used in PID function (These should probably not be global)
@@ -45,6 +51,8 @@ float rightMotorSpeed = 0;
 #define max_speed 30
 #define leftMotorBaseSpeed 20 // Default speed (if going straight forward)
 #define rightMotorBaseSpeed 20
+
+boolean go = true;
 
 void setup()
 {
@@ -64,9 +72,54 @@ void loop()
   handleButtons();                   // Check if any of the buttons have been pressed, and react accordingly
   updateDisplay();                   // Send error and PID values to LCD
   setMotorSpeed();                   // perform WA, and use PID to choose motor speeds
-  printData();
+  updateDistance();
+  //printData();
   //delay(200);
+
 }
+
+void updateDistance(){
+   encoderValue[0] = readEncoder(1);
+   encoderValue[1] = encoderValue[0];   // Hack because encoders interfere with each other magnetically
+   //encoderValue[1] = readEncoder(2);
+   Serial.print(encoderValue[0]);
+   Serial.print(", ");
+   Serial.println(encoderValue[1]);
+   if (rightMotorSpeed > 0){
+     encoderDistance -= (encoderValueOld[0] - encoderValue[0]);
+   }
+   else {
+     encoderDistance += (encoderValueOld[0] - encoderValue[0]);
+   }
+   if (leftMotorSpeed > 0){
+     encoderDistance -= (encoderValueOld[1] - encoderValue[1]);
+   }
+   else {
+     encoderDistance += (encoderValueOld[1] - encoderValue[1]);
+   }
+  distanceCentimetres = encoderDistance / 1.7; 
+  encoderValueOld[0] =  encoderValue[0];
+  encoderValueOld[1] =  encoderValue[1];
+}
+
+long unsigned int readEncoder (int side) {
+  long unsigned int encoder = 0;
+  if (side == 1){
+     robot.write("#e1");
+  }
+  else{
+    robot.write("#e2");
+  }
+  // wait breifly for response
+  delay(50);
+  encoder = robot.read();
+  encoder += (robot.read()<<8);
+  encoder += (robot.read()<<16);
+  encoder += (robot.read()<<24);
+  //Serial.println(encoder);
+  return encoder;
+}
+
 
 void printData()
 {
@@ -101,30 +154,31 @@ void setMotorSpeed(){
   pidoutput = PID((long)weightedAverage(data));
   leftMotorSpeed = leftMotorBaseSpeed + pidoutput;
   rightMotorSpeed = rightMotorBaseSpeed - pidoutput;
-
-  if (leftMotorSpeed > 0){
-    leftMotorSpeed = constrain(leftMotorSpeed, 0, max_speed);
-    robot.write("#D1f");
-    robot.write("#S1");
-    robot.print((int)leftMotorSpeed);
-  }
-  else{
-    leftMotorSpeed = constrain(leftMotorSpeed, min_speed, 0);
-    robot.write("#D1r");
-    robot.write("#S1");
-    robot.print(-(int)leftMotorSpeed);
-  }
-  if (rightMotorSpeed > 0){
-    rightMotorSpeed = constrain(rightMotorSpeed, 0, max_speed);
-    robot.write("#D2f");
-    robot.write("#S2");
-    robot.print((int)rightMotorSpeed);
-  }
-  else{
-    rightMotorSpeed = constrain(rightMotorSpeed, min_speed, 0);
-    robot.write("#D2r");
-    robot.write("#S2");
-    robot.print(-(int)rightMotorSpeed);
+  if(go){
+    if (leftMotorSpeed > 0){
+      leftMotorSpeed = constrain(leftMotorSpeed, 0, max_speed);
+      robot.write("#D1f");
+      robot.write("#S1");
+      robot.print((int)leftMotorSpeed);
+    }
+    else if (leftMotorSpeed < 0){
+      leftMotorSpeed = constrain(leftMotorSpeed, min_speed, 0);
+      robot.write("#D1r");
+      robot.write("#S1");
+      robot.print(-(int)leftMotorSpeed);
+    }
+    if (rightMotorSpeed > 0){
+      rightMotorSpeed = constrain(rightMotorSpeed, 0, max_speed);
+      robot.write("#D2f");
+      robot.write("#S2");
+      robot.print((int)rightMotorSpeed);
+    }
+    else if (rightMotorSpeed < 0){
+      rightMotorSpeed = constrain(rightMotorSpeed, min_speed, 0);
+      robot.write("#D2r");
+      robot.write("#S2");
+      robot.print(-(int)rightMotorSpeed);
+    }
   }
 }
 
@@ -161,6 +215,8 @@ void handleButtons(void){
       editing = 0;
     }
     updateDisplay();
+    robot.write("#hb");
+    go = !go;
     delay(500);
   }
 }
@@ -172,6 +228,10 @@ void updateDisplay(void){
   lcd.print(weightedAverage(data));
   lcd.print("        ");
   */
+  lcd.setCursor(0, 0);
+  lcd.print("Distance = ");
+  lcd.print(distanceCentimetres);
+  lcd.print("        ");
   lcd.setCursor(0, 1);
   lcd.print(" ");
   lcd.setCursor(1, 1);
@@ -247,7 +307,8 @@ void callibrate(){
   lcd.print("* Callibration *");
   lcd.setCursor(0, 1);
   lcd.print("      done     ");
-  delay(3000);
+  while (digitalRead(button2) == HIGH) {};
+  delay(1000);
 }
 
 float PID(long error){

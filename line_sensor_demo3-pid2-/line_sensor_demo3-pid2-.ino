@@ -30,20 +30,19 @@ int editing = 0;              // Which of the PID constants are we editing at th
 
 // PID coefficients (can be changed during run)
 #define Ku 2.24
-float Kp = 0.8*Ku;            // 2.0 works
-float Ki = 0.0;               // large values cause continuous spinning
-float Kd = 0.125*Ku;          // 0.5 works
+float Kp = 0.4; //0.8*Ku;            // 2.0 works
+float Ki = 0.05;               // large values cause continuous spinning
+float Kd = 1.0; //125*Ku;          // 0.5 works, so do negative values?
 // Variables used in PID function (These should probably not be global)
-float errorOld = 0;           // The previous error value, used to calculate the derivative
-float errorNew = 0;           // The new error value...
-float error = 0;              // How far are we from the line? (from weighted average)
-float errorSum = 0;           // Sum of past errors (apprximates intergral)
+int errorOld = 0;           // The previous error value, used to calculate the derivative
+int error = 0;              // How far are we from the line? (from weighted average)
+int errorSum = 0;           // Sum of past errors (apprximates intergral)
 float pidoutput = 0;          // Result of PID calculation
 
 float leftMotorSpeed = 0;     // Self explanatory
 float rightMotorSpeed = 0;
-#define min_speed -18
-#define max_speed 23
+#define min_speed -20
+#define max_speed 30
 #define leftMotorBaseSpeed 20 // Default speed (if going straight forward)
 #define rightMotorBaseSpeed 20
 
@@ -62,9 +61,11 @@ void setup()
 void loop()
 {
   getRawData();                      // Fetch data from line sensor
-  //handleButtons();                   // Check if any of the buttons have been pressed, and react accordingly
-  //updateDisplay();                   // Send error and PID values to LCD
+  handleButtons();                   // Check if any of the buttons have been pressed, and react accordingly
+  updateDisplay();                   // Send error and PID values to LCD
   setMotorSpeed();                   // perform WA, and use PID to choose motor speeds
+  printData();
+  //delay(200);
 }
 
 void printData()
@@ -91,8 +92,8 @@ int weightedAverage(uchar data[])
     sum2 += (255 - data[i]);
   }
   result = sum1 / sum2;
-  result *= 18;
-  result -= 127;
+  result *= 18;     // map to range
+  result -= 127;    // zero is central
   return result;
 }
 
@@ -249,15 +250,15 @@ void callibrate(){
   delay(3000);
 }
 
-float PID(long errorNew){
-  errorNew *= -1;
-  errorOld = error;        // Save the old error for differential component
-  error = errorNew;        // Calculate the error in position
-  errorSum += error;
-  float proportional = error * Kp;
+float PID(long error){
+  error = - error;
+  errorSum = (errorSum + error) * 0.95;
+  float proportional = (float)error * Kp;
   float integral = errorSum * Ki;
+  //integral = constrain(integral, -1000, 1000);
   float differential = (error - errorOld) * Kd;
   long output = proportional + integral + differential;
+  errorOld = error;
   return output;
 }
 

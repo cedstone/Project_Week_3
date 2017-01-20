@@ -36,7 +36,7 @@ int distanceCentimetres = 0;
 
 // PID coefficients (can be changed during run)
 #define Ku 2.24
-float Kp = 0.6; //0.8*Ku;            // 2.0 works o r0.4
+float Kp = 0.9; //0.8*Ku;            // 2.0 works o r0.4
 float Ki = 0.05;               // large values cause continuous spinning
 float Kd = 1.0; //125*Ku;          // 0.5 works, so do negative values?
 // Variables used in PID function (These should probably not be global)
@@ -74,8 +74,6 @@ void loop()
   setMotorSpeed();                   // perform WA, and use PID to choose motor speeds
   updateDistance();
   //printData();
-  //delay(200);
-
 }
 
 void updateDistance(){
@@ -97,7 +95,7 @@ void updateDistance(){
    else {
      encoderDistance += (encoderValueOld[1] - encoderValue[1]);
    }
-  distanceCentimetres = encoderDistance / 1.7; 
+  distanceCentimetres = encoderDistance * 0.55;
   encoderValueOld[0] =  encoderValue[0];
   encoderValueOld[1] =  encoderValue[1];
 }
@@ -116,7 +114,6 @@ long unsigned int readEncoder (int side) {
   encoder += (robot.read()<<8);
   encoder += (robot.read()<<16);
   encoder += (robot.read()<<24);
-  //Serial.println(encoder);
   return encoder;
 }
 
@@ -222,12 +219,6 @@ void handleButtons(void){
 }
 
 void updateDisplay(void){
-  /*
-  lcd.setCursor(0, 0);
-  lcd.print("Error = ");
-  lcd.print(weightedAverage(data));
-  lcd.print("        ");
-  */
   lcd.setCursor(0, 0);
   lcd.print("Distance = ");
   lcd.print(distanceCentimetres);
